@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2980b9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<title>一起走过</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans SC', sans-serif;
+    background: linear-gradient(145deg, #eef2f7 0%, #f5f7fa 100%);
+    color: #2c3e50;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 28px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 460px;
+    padding: 48px 28px 36px;
+    text-align: center;
+  }
+  h1 {
+    font-size: clamp(26px, 6vw, 34px);
+    font-weight: 700;
+    color: #1a2634;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+  }
+  h1 span { margin-right: 8px; }
+
+  .day-number {
+    font-size: clamp(68px, 18vw, 100px);
+    font-weight: 800;
+    color: #2980b9;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    padding: 12px 0;
+    overflow: visible;
+    min-height: 1.2em;
+  }
+  .day-unit {
+    font-size: clamp(20px, 5vw, 26px);
+    font-weight: 500;
+    color: #2c3e50;
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+
+  .date-hint {
+    font-size: clamp(13px, 3vw, 15px);
+    color: #8e9aaf;
+    margin-bottom: 6px;
+  }
+
+    font-size: clamp(11px, 2.5vw, 13px);
+    color: #aab4c3;
+    margin-bottom: 32px;
+  }
+
+  .footer-note {
+    font-size: clamp(12px, 2.8vw, 14px);
+    color: #8e9aaf;
+    line-height: 1.5;
+  }
+
+  .install-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    z-index: 100;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .install-bar.show { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .install-bar .text { font-size: 14px; color: #2c3e50; line-height: 1.3; }
+  .install-bar .btn-install {
+    flex-shrink: 0;
+    background: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .install-bar .btn-install:active { background: #1f6799; }
+  .install-bar .btn-dismiss {
+    flex-shrink: 0;
+    background: transparent;
+    color: #8e9aaf;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+
+  @media (max-width: 400px) {
+    .card { padding: 36px 20px 30px; border-radius: 22px; }
+    .install-bar { padding: 10px 16px; }
+  }
+  @media (min-width: 600px) {
+    .card { padding: 56px 36px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1><span>&#x1F5D3;</span>一起走过</h1>
+
+  <div class="day-number" id="dayCount">--</div>
+  <div class="day-unit">天</div>
+  <div class="date-hint">从 2026年5月1日 起</div>
+  <div class="footer-note">一起走过的每一天，都值得纪念</div>
+</div>
+
+<div class="install-bar" id="installBar">
+  <div class="text">&#x1F5D3; 安装「一起走过」到主屏幕</div>
+  <button class="btn-install" id="btnInstall">安装</button>
+  <button class="btn-dismiss" id="btnDismiss">&times;</button>
+</div>
+
+<script>
+(function() {
+  var START_DATE = new Date(2026, 4, 1); // 2026-05-01
+  var dayCountEl = document.getElementById('dayCount');
+
+  function calcDays(todayDate) {
+    var start = new Date(START_DATE);
+    start.setHours(0, 0, 0, 0);
+    var today = new Date(todayDate);
+    today.setHours(0, 0, 0, 0);
+    var diff = today - start;
+    var days = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+    dayCountEl.textContent = days.toLocaleString('zh-CN');
+  }
+
+  function fetchTimeAndUpdate() {
+    // Fetch time from server's /time API
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/time', true);
+    xhr.timeout = 5000;
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try {
+          var data = JSON.parse(xhr.responseText);
+          var localDate = data.localDate; // "yyyy-MM-dd"
+          calcDays(localDate);
+        } catch(e) {
+          fallbackToDeviceTime();
+        }
+      } else {
+        fallbackToDeviceTime();
+      }
+    };
+    xhr.onerror = function() { fallbackToDeviceTime(); };
+    xhr.ontimeout = function() { fallbackToDeviceTime(); };
+    xhr.send();
+  }
+
+  function fallbackToDeviceTime() {
+    // If network unavailable, use device time as fallback
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    calcDays(today);
+  }
+
+  // Initial update via network
+  fetchTimeAndUpdate();
+
+  // --- PWA Install ---
+  var deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('installBar').classList.add('show');
+  });
+
+  document.getElementById('btnInstall').addEventListener('click', function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(choiceResult) {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User installed');
+      }
+      deferredPrompt = null;
+      document.getElementById('installBar').classList.remove('show');
+    });
+  });
+
+  document.getElementById('btnDismiss').addEventListener('click', function() {
+    document.getElementById('installBar').classList.remove('show');
+    deferredPrompt = null;
+  });
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+      console.log('SW registration failed:', err);
+    });
+  }
+})();
+</script>
+</body>
+</html>
